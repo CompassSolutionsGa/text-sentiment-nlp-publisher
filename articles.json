@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "title": "How to Add Sentiment Analysis to Any App in 5 Minutes",
+    "tags": ["nlp", "sentiment-analysis", "api", "javascript", "python"],
+    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/",
+    "devto_published": false,
+    "medium_published": false,
+    "body_markdown": "# Add Sentiment Analysis to Any App in 5 Minutes\n\nMost apps already collect text: reviews, support tickets, chat logs, survey responses, and more. The problem is they rarely **measure** what people feel.\n\nIn this quick guide, we will wire up a simple API that turns any free text into:\n\n- Overall sentiment (positive, neutral, negative)\n- Polarity and subjectivity scores\n- Emotion hints (joy, anger, fear, trust)\n- Keywords and key phrases\n\n## 1. Get an API key\n\nSubscribe to the **Text Sentiment & NLP Insights API** on RapidAPI and copy your key.\n\n## 2. Make your first request (JavaScript)\n\n```javascript\nfetch(\"https://text-sentiment-nlp-insights-api.p.rapidapi.com/v1/basic\", {\n  method: \"POST\",\n  headers: {\n    \"content-type\": \"application/json\",\n    \"X-RapidAPI-Key\": \"YOUR_KEY\",\n    \"X-RapidAPI-Host\": \"text-sentiment-nlp-insights-api.p.rapidapi.com\"\n  },\n  body: JSON.stringify({ text: \"I love how easy this is to use.\" })\n})\n  .then(res => res.json())\n  .then(console.log);\n```\n\n## 3. Example use cases\n\n- Rank customer reviews by sentiment\n- Flag angry or frustrated support tickets\n- Track the emotional tone of community feedback over time\n\nOnce it is wired in, you can treat the API as a simple scoring function wherever you already handle text."
+  },
+  {
+    "id": 2,
+    "title": "Building a Lightweight NLP Analytics Layer with One API",
+    "tags": ["nlp", "analytics", "api", "devtools"],
+    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/",
+    "devto_published": false,
+    "medium_published": false,
+    "body_markdown": "# Building a Lightweight NLP Analytics Layer with One API\n\nYou do not need a full ML team to get value from NLP.\n\nWith a single HTTP endpoint you can:\n\n- Score sentiment on every piece of feedback\n- Extract entities and keywords\n- Enrich your dashboards with emotional context\n\nThis article walks through wiring the **Text Sentiment & NLP Insights API** into an existing analytics pipeline using Python and a cron job.\n\n```python\nimport requests\n\nurl = \"https://text-sentiment-nlp-insights-api.p.rapidapi.com/v1/advanced\"\n\npayload = {\n    \"text\": \"The service was slow at first, but the support team was very helpful.\"\n}\nheaders = {\n    \"content-type\": \"application/json\",\n    \"X-RapidAPI-Key\": \"YOUR_KEY\",\n    \"X-RapidAPI-Host\": \"text-sentiment-nlp-insights-api.p.rapidapi.com\"\n}\n\nr = requests.post(url, json=payload, headers=headers)\nprint(r.json())\n```\n\nFrom there you can push results into your warehouse or BI tool.\n"
+  }
+]
