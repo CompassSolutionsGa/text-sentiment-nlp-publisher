@@ -1,3 +1,4 @@
+
 import os
 import sys
 import json
@@ -8,8 +9,8 @@ import requests
 ARTICLES_FILE = "articles.json"
 HASHNODE_GRAPHQL_URL = "https://gql.hashnode.com"
 
-HASHNODE_API_KEY = os.getenv("fa87717b-e51c-453a-9f48-e4dffaf51243")
-HASHNODE_PUBLICATION_ID = os.getenv("6929bcb1136b6fb5f5584418")
+HASHNODE_API_KEY = os.getenv("HASHNODE_API_KEY")
+HASHNODE_PUBLICATION_ID = os.getenv("HASHNODE_PUBLICATION_ID")
 
 
 def load_articles() -> List[Dict]:

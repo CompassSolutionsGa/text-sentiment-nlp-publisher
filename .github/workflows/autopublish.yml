@@ -2,8 +2,7 @@ name: Auto-publish Dev.to and Hashnode articles
 
 on:
   schedule:
-    # Once per day at 09:00 UTC (change if you like)
-    - cron: "0 9 * * *"
+    - cron: "0 9 * * *"   # 09:00 UTC every day
   workflow_dispatch: {}
 
 jobs:
@@ -11,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      MAX_ARTICLES_PER_RUN: "5"
+      MAX_ARTICLES_PER_RUN: "3"
 
     steps:
       - name: Checkout repo
@@ -34,13 +33,13 @@ jobs:
         run: |
           python devto_publisher.py
 
-      - name: Publish to Medium
+      - name: Publish to Hashnode
         env:
-          MEDIUM_INTEGRATION_TOKEN: ${{ secrets.MEDIUM_INTEGRATION_TOKEN }}
-          MEDIUM_USER_ID: ${{ secrets.MEDIUM_USER_ID }}
+          HASHNODE_API_KEY: ${{ secrets.HASHNODE_API_KEY }}
+          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
           MAX_ARTICLES_PER_RUN: ${{ env.MAX_ARTICLES_PER_RUN }}
         run: |
-          python medium_publisher.py
+          python hashnode_publisher.py
 
       - name: Commit updated articles.json (if changed)
         run: |

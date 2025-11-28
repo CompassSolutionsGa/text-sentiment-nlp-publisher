@@ -8,8 +8,8 @@ import requests
 ARTICLES_FILE = Path("articles.json")
 DEVTO_API_URL = "https://dev.to/api/articles"
 
-DEVTO_API_KEY = os.getenv("pXCfVAf1aYrPFxGU4A4Voz2C")
-MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "5"))
+DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
+MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
 
 
 def load_articles():
