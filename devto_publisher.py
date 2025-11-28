@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import re
 from pathlib import Path
 
 import requests
@@ -32,10 +33,24 @@ def get_next_unpublished_devto(articles):
     return None
 
 
+def clean_tag(tag: str) -> str:
+    """
+    Dev.to tags must be alphanumeric only (no hyphens, spaces, etc.).
+    This function strips invalid characters; if the result is empty,
+    it falls back to a generic tag 'nlp'.
+    """
+    cleaned = re.sub(r"[^a-zA-Z0-9]", "", tag)
+    return cleaned if cleaned else "nlp"
+
+
 def publish_to_devto(article):
     if not DEVTO_API_KEY:
         print("DEVTO_API_KEY environment variable is not set.")
         sys.exit(1)
+
+    # Take article tags, clean them for Dev.to, and limit to 4
+    raw_tags = article.get("tags", [])
+    clean_tags = [clean_tag(t) for t in raw_tags][:4]
 
     payload = {
         "article": {
@@ -43,7 +58,7 @@ def publish_to_devto(article):
             "published": True,
             "body_markdown": article["body_markdown"],
             "canonical_url": article.get("canonical_url"),
-            "tags": article.get("tags", []),
+            "tags": clean_tags,
             "series": article.get("series"),
         }
     }
