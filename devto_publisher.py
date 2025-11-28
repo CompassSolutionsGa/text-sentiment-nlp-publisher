@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import re
+import time
 from pathlib import Path
 
 import requests
@@ -11,6 +12,10 @@ DEVTO_API_URL = "https://dev.to/api/articles"
 
 DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
 MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
+
+# Retry settings for Dev.to 429 errors
+MAX_RETRIES = 5
+RETRY_DELAY = 20  # seconds
 
 
 def load_articles():
@@ -34,21 +39,16 @@ def get_next_unpublished_devto(articles):
 
 
 def clean_tag(tag: str) -> str:
-    """
-    Dev.to tags must be alphanumeric only (no hyphens, spaces, etc.).
-    This function strips invalid characters; if the result is empty,
-    it falls back to a generic tag 'nlp'.
-    """
     cleaned = re.sub(r"[^a-zA-Z0-9]", "", tag)
     return cleaned if cleaned else "nlp"
 
 
 def publish_to_devto(article):
+
     if not DEVTO_API_KEY:
         print("DEVTO_API_KEY environment variable is not set.")
         sys.exit(1)
 
-    # Take article tags, clean them for Dev.to, and limit to 4
     raw_tags = article.get("tags", [])
     clean_tags = [clean_tag(t) for t in raw_tags][:4]
 
@@ -68,15 +68,27 @@ def publish_to_devto(article):
         "api-key": DEVTO_API_KEY,
     }
 
-    response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
+    # Retry loop for 429 rate limits
+    for attempt in range(1, MAX_RETRIES + 1):
 
-    if response.status_code not in (200, 201):
-        print("Failed to publish to Dev.to:", response.status_code, response.text)
-        sys.exit(1)
+        response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
 
-    data = response.json()
-    print("Published to Dev.to:", data.get("url"))
-    return data.get("url")
+        if response.status_code == 429:
+            print(f"Dev.to rate limit hit (429). Waiting {RETRY_DELAY}s before retry {attempt}/{MAX_RETRIES}...")
+            time.sleep(RETRY_DELAY)
+            continue
+
+        if response.status_code not in (200, 201):
+            print("Failed to publish to Dev.to:", response.status_code, response.text)
+            return None
+
+        # Success
+        data = response.json()
+        print("Published to Dev.to:", data.get("url"))
+        return data.get("url")
+
+    print("Dev.to publishing failed after max retries.")
+    return None
 
 
 def main():
@@ -91,11 +103,14 @@ def main():
 
         print(f"Publishing to Dev.to: {article['title']}")
         url = publish_to_devto(article)
-        article["devto_published"] = True
-        if url:
-            article["devto_url"] = url
 
-        published_count += 1
+        if url:
+            article["devto_published"] = True
+            article["devto_url"] = url
+            published_count += 1
+        else:
+            print("Skipping this article due to errors.")
+            break
 
     save_articles(articles)
     print(f"Dev.to publish run complete. Published {published_count} article(s).")
