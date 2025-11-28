@@ -1,9 +1,8 @@
 import json
 import os
 import sys
-import re
+import time
 from pathlib import Path
-
 import requests
 
 ARTICLES_FILE = Path("articles.json")
@@ -11,6 +10,7 @@ DEVTO_API_URL = "https://dev.to/api/articles"
 
 DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
 MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
+DELAY_BETWEEN_POSTS = 300  # 5 minutes
 
 
 def load_articles():
@@ -33,35 +33,18 @@ def get_next_unpublished_devto(articles):
     return None
 
 
-def clean_devto_tags(raw_tags):
-    """
-    Dev.to rules:
-      - max 4 tags
-      - lowercase
-      - only [a-z0-9] (no hyphens, spaces, etc.)
-    """
-    if not raw_tags:
-        return []
-
-    cleaned = []
-    for tag in raw_tags:
-        t = re.sub(r"[^a-z0-9]", "", str(tag).lower())
-        if t and t not in cleaned:
-            cleaned.append(t)
-        if len(cleaned) == 4:
-            break
-    return cleaned
-
-
 def publish_to_devto(article):
     if not DEVTO_API_KEY:
-        print("DEVTO_API_KEY environment variable is not set.")
+        print("DEVTO_API_KEY not set.")
         sys.exit(1)
 
-    raw_tags = article.get("tags", [])
-    tags = clean_devto_tags(raw_tags)
-    if not tags:
-        tags = ["nlp"]
+    # Clean tags safely
+    tags = article.get("tags", [])
+    clean_tags = []
+    for tag in tags:
+        t = "".join(c for c in tag.lower().strip() if c.isalnum() or c == "-")
+        if t:
+            clean_tags.append(t)
 
     payload = {
         "article": {
@@ -69,8 +52,7 @@ def publish_to_devto(article):
             "published": True,
             "body_markdown": article["body_markdown"],
             "canonical_url": article.get("canonical_url"),
-            "tags": tags,
-            "series": article.get("series"),
+            "tags": clean_tags[:4],  # Dev.to allows max 4 tags
         }
     }
 
@@ -81,35 +63,13 @@ def publish_to_devto(article):
 
     response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
 
-    # Success
     if response.status_code in (200, 201):
         data = response.json()
-        url = data.get("url")
-        print("Published to Dev.to:", url)
-        return url, True
+        print("Published to Dev.to:", data.get("url"))
+        return data.get("url")
 
-    # Rate limit — stop the whole run so GitHub Actions fails fast
-    if response.status_code == 429:
-        print("Failed to publish to Dev.to: 429 rate limited. Stopping this run.")
-        sys.exit(1)
-
-    # Parse error message if possible
-    try:
-        err_json = response.json()
-        err_msg = err_json.get("error", str(err_json))
-    except Exception:
-        err_msg = response.text
-
-    print("Failed to publish to Dev.to:", response.status_code, err_msg)
-
-    # If canonical already used, mark as published so we skip next runs
-    if "canonical url has already been taken" in err_msg.lower():
-        print("Article already exists with this canonical URL. Marking as devto_published and skipping.")
-        return None, True
-
-    # For validation errors (tags, etc.) DO NOT mark as published
-    print("Skipping this article due to Dev.to validation error without marking as published.")
-    return None, False
+    print("Failed to publish to Dev.to:", response.text)
+    return None
 
 
 def main():
@@ -123,16 +83,19 @@ def main():
             break
 
         print(f"Publishing to Dev.to: {article['title']}")
-        url, mark_published = publish_to_devto(article)
+        url = publish_to_devto(article)
 
-        if mark_published:
+        if url:
             article["devto_published"] = True
-            if url:
-                article["devto_url"] = url
+            article["devto_url"] = url
             published_count += 1
+
+            print(f"Waiting 5 minutes before next Dev.to post...")
+            time.sleep(DELAY_BETWEEN_POSTS)
+
         else:
-            # Leave devto_published = False so you can fix the article and rerun
-            break
+            print("Skipping this article due to error.")
+            article["devto_published"] = True  # mark invalid to avoid retries
 
     save_articles(articles)
     print(f"Dev.to publish run complete. Published {published_count} article(s).")
