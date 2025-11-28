@@ -33,32 +33,17 @@ def get_next_unpublished_devto(articles):
     return None
 
 
-def clean_tags(raw_tags):
-    """
-    Dev.to is picky about tags. To be safe:
-    - Only allow a–z and 0–9
-    - Lowercase everything
-    - Truncate to 20 chars
-    - Max 4 tags
-    """
-    cleaned = []
-    for t in raw_tags:
-        slug = "".join(ch.lower() for ch in t if ch.isalnum())
-        if not slug:
-            continue
-        cleaned.append(slug[:20])
-        if len(cleaned) >= 4:
-            break
-    return cleaned
-
-
 def publish_to_devto(article):
+    """
+    Publish a single article to Dev.to.
+
+    We intentionally do NOT send tags, because their validation rules are
+    picky and are currently rejecting several of your tag values.
+    """
+
     if not DEVTO_API_KEY:
         print("DEVTO_API_KEY environment variable is not set.")
         sys.exit(1)
-
-    raw_tags = article.get("tags", [])
-    tags = clean_tags(raw_tags)
 
     payload = {
         "article": {
@@ -66,7 +51,7 @@ def publish_to_devto(article):
             "published": True,
             "body_markdown": article["body_markdown"],
             "canonical_url": article.get("canonical_url"),
-            "tags": tags,
+            # "tags": article.get("tags", []),  # disabled on purpose
             "series": article.get("series"),
         }
     }
@@ -77,37 +62,36 @@ def publish_to_devto(article):
     }
 
     response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
+    text = response.text
 
     # Success
     if response.status_code in (200, 201):
         data = response.json()
         url = data.get("url")
         print("Published to Dev.to:", url)
-        return url, "ok"
+        return "ok", url
 
-    text = response.text
     print(f"Failed to publish to Dev.to: {text}")
 
-    # Rate limit – do NOT mark as published, just stop and retry next run
+    # Rate-limit or generic "Retry later"
     if response.status_code == 429 or "Retry later" in text:
-        print("Dev.to is rate limiting us. Will retry this article on a future run.")
-        return None, "rate_limit"
+        print("Dev.to rate limit hit. Will retry this article on the next run.")
+        return "rate_limit", None
 
-    # Canonical URL already used – permanent error
+    # Canonical URL already used (permanent)
     if "Canonical url has already been taken" in text:
         print("Canonical URL already used on Dev.to. "
               "Marking this article as permanently failed so we do not retry.")
-        return None, "permanent"
+        return "permanent", None
 
-    # Tag / validation issues – permanent error
+    # Validation / tag / other 422 errors – treat as permanent
     if response.status_code == 422:
-        print("Validation error (likely tags or other fields). "
-              "Marking as permanently failed.")
-        return None, "permanent"
+        print("Dev.to validation error. Treating as permanent failure.")
+        return "permanent", None
 
-    # Anything else – treat as permanent to avoid infinite retries
-    print("Unexpected Dev.to error. Marking as permanently failed.")
-    return None, "permanent"
+    # Any other errors – also treat as permanent
+    print("Unexpected Dev.to error. Treating as permanent failure.")
+    return "permanent", None
 
 
 def main():
@@ -121,28 +105,27 @@ def main():
             break
 
         print(f"Publishing to Dev.to: {article['title']}")
-        url, status = publish_to_devto(article)
+        status, url = publish_to_devto(article)
 
         if status == "ok":
-            # Successful publish
             article["devto_published"] = True
             if url:
                 article["devto_url"] = url
             published_count += 1
 
-            # Wait 5 minutes between successful publishes
             if published_count < MAX_PER_RUN:
-                print("Sleeping 300 seconds to avoid rate limits...")
+                # wait 5 minutes between successful posts to avoid limits
+                print("Sleeping 300 seconds before next Dev.to publish...")
                 time.sleep(300)
 
         elif status == "permanent":
-            # Mark as published so we don't retry this broken article
-            print("Skipping this article due to permanent error.")
+            # Mark as published so we do not retry this broken article
+            print("Skipping this article permanently due to Dev.to error.")
             article["devto_published"] = True
 
         elif status == "rate_limit":
-            # Do NOT mark as published; retry on next run
-            print("Stopping this run because of Dev.to rate limiting.")
+            # Do NOT mark as published; we will retry next run
+            print("Stopping Dev.to run because of rate limiting.")
             break
 
     save_articles(articles)

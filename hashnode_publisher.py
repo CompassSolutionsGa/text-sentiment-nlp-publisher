@@ -35,19 +35,23 @@ def main():
         return
 
     print(
-        "Hashnode auto-publish is currently disabled.\n"
-        "Reason: The public GraphQL API at https://gql.hashnode.com "
-        "does not expose a mutation to create posts. "
-        "You will need to publish this article manually:\n"
-        f"  Title: {article['title']}"
+        "Hashnode auto-publish is disabled.\n"
+        "Reason: The public GraphQL endpoint at https://gql.hashnode.com "
+        "does not support mutations to create posts "
+        "(\"createStory\" / \"CreateStoryInput\" are not available).\n"
+        "Please publish this article manually in Hashnode, then optionally "
+        "set `hashnode_published` to true in articles.json:\n"
+        f"  Title: {article['title']}\n"
+        f"  Canonical URL: {article.get('canonical_url')}"
     )
 
-    # If you want to mark items as 'handled' after manual posting, uncomment:
-    # article["hashnode_published"] = True
+    # If you want the script to automatically mark it as handled after you
+    # manually post it, uncomment this block:
+    #
+    # article['hashnode_published'] = True
     # save_articles(articles)
-    # print("Marked article as hashnode_published after manual steps.")
+    # print('Marked article as hashnode_published after manual steps.')
 
-    # Exit successfully so the GitHub Action does not fail
     sys.exit(0)
 
 
