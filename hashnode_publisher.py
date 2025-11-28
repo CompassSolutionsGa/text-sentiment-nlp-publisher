@@ -1,11 +1,11 @@
 import os
 import sys
 import json
+import requests
 from typing import List, Dict, Optional
 
-import requests
-
 ARTICLES_FILE = "articles.json"
+# New GraphQL endpoint
 HASHNODE_API_URL = "https://gql.hashnode.com"
 
 HASHNODE_API_KEY = os.getenv("HASHNODE_API_KEY")
@@ -27,90 +27,95 @@ def save_articles(articles: List[Dict]) -> None:
 
 
 def get_next_unpublished_hashnode(articles: List[Dict]) -> Optional[Dict]:
-    """Return the next article where hashnode_published is not True."""
     for article in articles:
-        if not article.get("hashnode_published", False):
+        if not article.get("hashnode_published"):
             return article
     return None
-
-
-# You may need to tweak this mutation name and/or input type based on the
-# "Docs" panel in your Hashnode GraphQL Playground.
-CREATE_POST_MUTATION = """
-mutation CreatePost($input: CreatePostInput!) {
-  createPost(input: $input) {
-    post {
-      id
-      slug
-      url
-    }
-  }
-}
-"""
 
 
 def build_hashnode_payload(article: Dict) -> Dict:
     title = article["title"]
     content_markdown = article["content_markdown"]
-
     tags = article.get("tags", [])
+
+    # Hashnode tags: list of { slug, name }
     hashnode_tags = [{"slug": t, "name": t} for t in tags]
 
-    variables = {
-        "input": {
-            "title": title,
-            "contentMarkdown": content_markdown,
-            "tags": hashnode_tags,
-            # If your schema expects a different field name than "publicationId",
-            # adjust this based on the Playground docs.
-            "publicationId": HASHNODE_PUBLICATION_ID,
+    mutation = """
+    mutation PublishToPublication(
+      $title: String!,
+      $contentMarkdown: String!,
+      $tags: [TagInput!],
+      $publicationId: ID!
+    ) {
+      createPost(
+        input: {
+          title: $title,
+          contentMarkdown: $contentMarkdown,
+          tags: $tags,
+          publicationId: $publicationId
         }
+      ) {
+        post {
+          id
+          slug
+          url
+        }
+      }
+    }
+    """
+
+    variables = {
+        "title": title,
+        "contentMarkdown": content_markdown,
+        "tags": hashnode_tags,
+        "publicationId": HASHNODE_PUBLICATION_ID,
     }
 
     return {
-        "query": CREATE_POST_MUTATION,
+        "query": mutation,
         "variables": variables,
     }
 
 
 def publish_to_hashnode(article: Dict) -> Optional[str]:
     if not HASHNODE_API_KEY or not HASHNODE_PUBLICATION_ID:
-        print("Missing HASHNODE_API_KEY or HASHNODE_PUBLICATION_ID. Skipping Hashnode publish.")
-        return None
+        print("Missing HASHNODE_API_KEY or HASHNODE_PUBLICATION_ID environment variables.")
+        sys.exit(1)
 
     payload = build_hashnode_payload(article)
 
     headers = {
         "Content-Type": "application/json",
+        # Hashnode uses the token directly in Authorization
         "Authorization": HASHNODE_API_KEY,
     }
 
     response = requests.post(HASHNODE_API_URL, json=payload, headers=headers)
 
     if response.status_code != 200:
-        print("Hashnode API request failed:", response.status_code, response.text)
-        # Do not crash the workflow; just report the error.
+        print("Failed to publish to Hashnode:", response.status_code, response.text)
         return None
 
     data = response.json()
-
-    # Handle GraphQL errors block
-    if "errors" in data:
-        print("Hashnode GraphQL errors:", json.dumps(data["errors"], indent=2))
+    errors = data.get("errors")
+    if errors:
+        print("Hashnode GraphQL errors:", errors)
         return None
 
-    post_data = (
-        data.get("data", {})
+    post = (
+        data
+        .get("data", {})
         .get("createPost", {})
         .get("post", {})
     )
 
-    url = post_data.get("url")
-    if url:
-        print("Published to Hashnode:", url)
-    else:
-        print("Hashnode did not return a post URL:", json.dumps(data, indent=2))
+    url = post.get("url")
+    if not url:
+        print("Hashnode response did not include a post URL:", data)
+        return None
 
+    print(f"Published to Hashnode: {url}")
     return url
 
 

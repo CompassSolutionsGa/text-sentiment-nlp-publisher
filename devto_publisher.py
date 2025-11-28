@@ -38,7 +38,7 @@ def clean_devto_tags(raw_tags):
     Dev.to rules:
       - max 4 tags
       - lowercase
-      - only a–z and 0–9 (no hyphens, spaces, etc.)
+      - only [a-z0-9] (no hyphens, spaces, etc.)
     """
     if not raw_tags:
         return []
@@ -61,7 +61,7 @@ def publish_to_devto(article):
     raw_tags = article.get("tags", [])
     tags = clean_devto_tags(raw_tags)
     if not tags:
-        tags = ["nlp"]  # safe default
+        tags = ["nlp"]
 
     payload = {
         "article": {
@@ -88,26 +88,27 @@ def publish_to_devto(article):
         print("Published to Dev.to:", url)
         return url, True
 
-    # Rate limit – stop the run
+    # Rate limit — stop the whole run so GitHub Actions fails fast
     if response.status_code == 429:
         print("Failed to publish to Dev.to: 429 rate limited. Stopping this run.")
         sys.exit(1)
 
-    # 422 or other 4xx – inspect error
+    # Parse error message if possible
     try:
-        err = response.json().get("error", response.text)
+        err_json = response.json()
+        err_msg = err_json.get("error", str(err_json))
     except Exception:
-        err = response.text
+        err_msg = response.text
 
-    print("Failed to publish to Dev.to:", response.status_code, err)
+    print("Failed to publish to Dev.to:", response.status_code, err_msg)
 
-    # If the canonical URL is already taken, mark as published so we skip it next time
-    if "canonical url has already been taken" in err.lower():
+    # If canonical already used, mark as published so we skip next runs
+    if "canonical url has already been taken" in err_msg.lower():
         print("Article already exists with this canonical URL. Marking as devto_published and skipping.")
         return None, True
 
-    # For other validation errors (should be rare now), do not mark as published
-    print("Skipping this article due to Dev.to validation error.")
+    # For validation errors (tags, etc.) DO NOT mark as published
+    print("Skipping this article due to Dev.to validation error without marking as published.")
     return None, False
 
 
@@ -130,7 +131,7 @@ def main():
                 article["devto_url"] = url
             published_count += 1
         else:
-            # Leave devto_published = False so you can fix and rerun later
+            # Leave devto_published = False so you can fix the article and rerun
             break
 
     save_articles(articles)
