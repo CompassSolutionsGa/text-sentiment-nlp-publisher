@@ -6,7 +6,7 @@ from typing import List, Dict, Optional
 import requests
 
 ARTICLES_FILE = "articles.json"
-HASHNODE_API_URL = "https://api.hashnode.com"
+HASHNODE_API_URL = "https://gql.hashnode.com"
 
 HASHNODE_API_KEY = os.getenv("HASHNODE_API_KEY")
 HASHNODE_PUBLICATION_ID = os.getenv("HASHNODE_PUBLICATION_ID")
