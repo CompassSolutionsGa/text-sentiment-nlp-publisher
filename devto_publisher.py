@@ -1,8 +1,5 @@
 import json
 import os
-import sys
-import re
-import time
 from pathlib import Path
 
 import requests
@@ -13,15 +10,11 @@ DEVTO_API_URL = "https://dev.to/api/articles"
 DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
 MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
 
-# Retry settings for Dev.to 429 errors
-MAX_RETRIES = 5
-RETRY_DELAY = 20  # seconds
-
 
 def load_articles():
     if not ARTICLES_FILE.exists():
         print("articles.json not found")
-        sys.exit(1)
+        raise SystemExit(1)
     with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -31,6 +24,19 @@ def save_articles(articles):
         json.dump(articles, f, indent=2, ensure_ascii=False)
 
 
+def clean_tags(tags):
+    """
+    Dev.to allows max 4 tags; they must be simple slugs.
+    We normalize to lowercase and strip non-alphanumeric characters.
+    """
+    cleaned = []
+    for t in tags or []:
+        slug = "".join(ch.lower() for ch in t if ch.isalnum())
+        if slug and slug not in cleaned:
+            cleaned.append(slug)
+    return cleaned[:4]
+
+
 def get_next_unpublished_devto(articles):
     for article in articles:
         if not article.get("devto_published", False):
@@ -38,19 +44,10 @@ def get_next_unpublished_devto(articles):
     return None
 
 
-def clean_tag(tag: str) -> str:
-    cleaned = re.sub(r"[^a-zA-Z0-9]", "", tag)
-    return cleaned if cleaned else "nlp"
-
-
 def publish_to_devto(article):
-
     if not DEVTO_API_KEY:
         print("DEVTO_API_KEY environment variable is not set.")
-        sys.exit(1)
-
-    raw_tags = article.get("tags", [])
-    clean_tags = [clean_tag(t) for t in raw_tags][:4]
+        return None
 
     payload = {
         "article": {
@@ -58,7 +55,7 @@ def publish_to_devto(article):
             "published": True,
             "body_markdown": article["body_markdown"],
             "canonical_url": article.get("canonical_url"),
-            "tags": clean_tags,
+            "tags": clean_tags(article.get("tags", [])),
             "series": article.get("series"),
         }
     }
@@ -68,26 +65,31 @@ def publish_to_devto(article):
         "api-key": DEVTO_API_KEY,
     }
 
-    # Retry loop for 429 rate limits
-    for attempt in range(1, MAX_RETRIES + 1):
+    response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
 
-        response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
-
-        if response.status_code == 429:
-            print(f"Dev.to rate limit hit (429). Waiting {RETRY_DELAY}s before retry {attempt}/{MAX_RETRIES}...")
-            time.sleep(RETRY_DELAY)
-            continue
-
-        if response.status_code not in (200, 201):
-            print("Failed to publish to Dev.to:", response.status_code, response.text)
-            return None
-
-        # Success
+    # Success
+    if response.status_code in (200, 201):
         data = response.json()
-        print("Published to Dev.to:", data.get("url"))
-        return data.get("url")
+        url = data.get("url")
+        print("Published to Dev.to:", url)
+        return url
 
-    print("Dev.to publishing failed after max retries.")
+    # Handle rate limiting gracefully
+    if response.status_code == 429:
+        print("Failed to publish to Dev.to: 429 rate limited. Stopping this run.")
+        return None
+
+    # Handle canonical URL already taken (article already exists on Dev.to)
+    if response.status_code == 422 and "Canonical url has already been taken" in response.text:
+        print(
+            "Dev.to: Article already exists with this canonical URL. "
+            "Marking as published and skipping."
+        )
+        # We mutate the article object so main() can treat it as done.
+        article["devto_published"] = True
+        return None
+
+    print("Failed to publish to Dev.to:", response.status_code, response.text)
     return None
 
 
@@ -104,13 +106,20 @@ def main():
         print(f"Publishing to Dev.to: {article['title']}")
         url = publish_to_devto(article)
 
-        if url:
-            article["devto_published"] = True
-            article["devto_url"] = url
+        # If publish_to_devto marked it as published (canonical duplicate), just count it and keep going.
+        if article.get("devto_published"):
             published_count += 1
-        else:
-            print("Skipping this article due to errors.")
+            continue
+
+        # If url is None here, it was a real failure (rate limit or other). Stop this run.
+        if url is None:
+            print("Dev.to publish failed, stopping this run.")
             break
+
+        # Normal success path
+        article["devto_published"] = True
+        article["devto_url"] = url
+        published_count += 1
 
     save_articles(articles)
     print(f"Dev.to publish run complete. Published {published_count} article(s).")

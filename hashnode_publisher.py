@@ -1,133 +1,125 @@
-
-import os
-import sys
 import json
-from typing import List, Dict, Optional
+import os
+from pathlib import Path
 
 import requests
 
-ARTICLES_FILE = "articles.json"
-HASHNODE_GRAPHQL_URL = "https://gql.hashnode.com"
+ARTICLES_FILE = Path("articles.json")
 
 HASHNODE_API_KEY = os.getenv("HASHNODE_API_KEY")
 HASHNODE_PUBLICATION_ID = os.getenv("HASHNODE_PUBLICATION_ID")
+MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
+
+HASHNODE_API_URL = "https://gql.hashnode.com"
 
 
-def load_articles() -> List[Dict]:
-    if not os.path.exists(ARTICLES_FILE):
-        print(f"{ARTICLES_FILE} not found.")
-        sys.exit(1)
-
+def load_articles():
+    if not ARTICLES_FILE.exists():
+        print("articles.json not found")
+        raise SystemExit(1)
     with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def save_articles(articles: List[Dict]) -> None:
+def save_articles(articles):
     with open(ARTICLES_FILE, "w", encoding="utf-8") as f:
         json.dump(articles, f, indent=2, ensure_ascii=False)
 
 
-def get_next_unpublished_hashnode(articles: List[Dict]) -> Optional[Dict]:
-    """Return the first article that has not yet been published to Hashnode."""
+def get_next_unpublished_hashnode(articles):
     for article in articles:
-        if not article.get("hashnode_published"):
+        if not article.get("hashnode_published", False):
             return article
     return None
 
 
-def build_hashnode_payload(article: Dict) -> Dict:
-    """
-    Build GraphQL mutation payload for Hashnode publications.
-    Uses createPublicationStory(pubId: ID!, input: CreateStoryInput!).
-    """
-    title = article["title"]
-    content_markdown = article["content_markdown"]
-    tags = article.get("tags", [])  # list of strings
+def publish_to_hashnode(article):
+    if not HASHNODE_API_KEY or not HASHNODE_PUBLICATION_ID:
+        print("Missing HASHNODE_API_KEY or HASHNODE_PUBLICATION_ID.")
+        return None
 
-    # Hashnode tags: list of TagInput (slug + name). We'll map string tags -> both fields.
-    hashnode_tags = [{"slug": t, "name": t} for t in tags]
-
-    mutation = """
-    mutation CreatePublicationStory($pubId: ID!, $input: CreateStoryInput!) {
-      createPublicationStory(publicationId: $pubId, input: $input) {
-        code
-        success
-        message
+    # Hashnode v2 GraphQL mutation
+    query = """
+    mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
         post {
           _id
           slug
+          title
           url
         }
       }
     }
     """
 
+    tags = article.get("tags", [])
+
     variables = {
-        "pubId": HASHNODE_PUBLICATION_ID,
         "input": {
-            "title": title,
-            "contentMarkdown": content_markdown,
-            "tags": hashnode_tags,
-            "isPartOfPublication": True,
-            # you can add "isRepublished": { "originalArticleURL": ... } here if needed
-        },
+            "title": article["title"],
+            "slug": article["slug"],
+            "contentMarkdown": article["content_markdown"],
+            "tags": tags,
+            "publicationId": HASHNODE_PUBLICATION_ID,
+            "isPublished": True,
+        }
     }
-
-    return {"query": mutation, "variables": variables}
-
-
-def publish_to_hashnode(article: Dict) -> Optional[str]:
-    if not HASHNODE_API_KEY or not HASHNODE_PUBLICATION_ID:
-        print("Missing HASHNODE_API_KEY or HASHNODE_PUBLICATION_ID environment variables.")
-        sys.exit(1)
-
-    payload = build_hashnode_payload(article)
 
     headers = {
+        "Authorization": HASHNODE_API_KEY,
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {HASHNODE_API_KEY}",
     }
 
-    response = requests.post(HASHNODE_GRAPHQL_URL, json=payload, headers=headers)
+    response = requests.post(
+        HASHNODE_API_URL,
+        json={"query": query, "variables": variables},
+        headers=headers,
+    )
 
     if response.status_code != 200:
-        print("Failed to publish to Hashnode:", response.status_code, response.text)
+        print("Hashnode API request failed:", response.status_code, response.text)
         return None
 
     data = response.json()
+
     if "errors" in data:
         print("Hashnode GraphQL errors:", data["errors"])
         return None
 
-    story = data.get("data", {}).get("createPublicationStory")
-    if not story or not story.get("success"):
-        print("Hashnode API returned an error:", story or data)
+    try:
+        post = data["data"]["createPost"]["post"]
+        url = post.get("url")
+    except (KeyError, TypeError):
+        print("Unexpected Hashnode response:", data)
         return None
 
-    post = story.get("post") or {}
-    url = post.get("url")
-    print(f"Published to Hashnode: {url}")
+    print("Published to Hashnode:", url)
     return url
 
 
 def main():
     articles = load_articles()
-    article = get_next_unpublished_hashnode(articles)
+    published_count = 0
 
-    if not article:
-        print("No unpublished Hashnode articles remaining.")
-        return
+    while published_count < MAX_PER_RUN:
+        article = get_next_unpublished_hashnode(articles)
+        if not article:
+            print("No unpublished Hashnode articles remaining.")
+            break
 
-    print(f"Publishing article to Hashnode: {article['title']}")
-    url = publish_to_hashnode(article)
+        print(f"Publishing article to Hashnode: {article['title']}")
+        url = publish_to_hashnode(article)
 
-    if url:
+        if not url:
+            print("Hashnode publish failed, stopping this run.")
+            break
+
         article["hashnode_published"] = True
         article["hashnode_url"] = url
-        save_articles(articles)
-        print("Hashnode publish complete.")
-    else:
-        print("Hashnode publish failed.")
+        published_count += 1
+
+    save_articles(articles)
+    print(f"Hashnode publish run complete. Published {published_count} article(s).")
 
 
 if __name__ == "__main__":
