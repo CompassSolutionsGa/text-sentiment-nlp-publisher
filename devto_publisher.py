@@ -67,6 +67,16 @@ def build_body_with_cta(raw_body: str) -> str:
 
 
 def publish_to_devto(article):
+    """
+    Try to publish one article to Dev.to.
+
+    Returns dict with:
+      {"status": "published", "url": "..."}            # success
+      {"status": "canonical_taken"}                    # already exists on Dev.to
+      {"status": "rate_limited"}                       # 429
+      {"status": "validation_error", "error": "..."}   # 422 other
+      {"status": "error", "error": "..."}              # anything else
+    """
     if not DEVTO_API_KEY:
         print("DEVTO_API_KEY environment variable is not set.")
         sys.exit(1)
@@ -95,18 +105,34 @@ def publish_to_devto(article):
 
     response = requests.post(DEVTO_API_URL, headers=headers, json=payload)
 
+    # Success
     if response.status_code == 201:
         data = response.json()
         url = data.get("url")
         print("Published →", url)
-        return url
+        return {"status": "published", "url": url}
 
+    # Rate limited
     if response.status_code == 429:
         print("Rate limited. Retry later.")
-        return None
+        return {"status": "rate_limited"}
 
+    # Validation / canonical issues
+    if response.status_code == 422:
+        text = response.text
+        if "Canonical url has already been taken" in text:
+            print(
+                "Canonical URL has already been used on Dev.to; "
+                "marking as published and skipping this article."
+            )
+            return {"status": "canonical_taken"}
+        else:
+            print("Validation error from Dev.to:", text)
+            return {"status": "validation_error", "error": text}
+
+    # Other unexpected errors
     print("Failed to publish to Dev.to:", response.status_code, response.text)
-    return None
+    return {"status": "error", "error": response.text}
 
 
 def main():
@@ -122,20 +148,28 @@ def main():
         article = articles[idx]
         print(f"Publishing to Dev.to: {article['title']}")
 
-        url = publish_to_devto(article)
+        result = publish_to_devto(article)
+        status = result["status"]
 
-        if url:
+        if status in ("published", "canonical_taken"):
+            # Treat both as "done" so we never retry this canonical again
             articles[idx]["devto_published"] = True
-            articles[idx]["devto_url"] = url
-            published_count += 1
+            if status == "published" and result.get("url"):
+                articles[idx]["devto_url"] = result["url"]
             save_articles(articles)
-        else:
-            # If publish fails (validation or rate limit), stop this run
-            print("Publish failed; stopping this run.")
+            published_count += 1
+
+            # Be polite to Dev.to and avoid rate limiting
+            time.sleep(60)
+            continue
+
+        if status == "rate_limited":
+            print("Stopping run due to rate limiting; will retry later.")
             break
 
-        # Be polite to Dev.to and avoid rate limiting
-        time.sleep(60)
+        # For any other error, stop so you can inspect the logs
+        print("Publish failed with status:", status)
+        break
 
     print(f"Dev.to publish run complete. Published {published_count} article(s).")
 
