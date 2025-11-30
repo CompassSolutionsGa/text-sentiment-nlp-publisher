@@ -1,28 +1,5 @@
 [
   {
-
-    "title": "What Sentiment Polarity Really Means in Natural Language Processing",
-    "slug": "what-sentiment-polarity-means-nlp",
-    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/sentiment-polarity/",
-    "tags": ["nlp", "sentiment", "machinelearning"],
-    "series": "Short NLP Notes",
-    "body_markdown": "Sentiment polarity is one of the most commonly referenced outputs of a sentiment analysis model, yet it is often misunderstood. Polarity measures the direction and intensity of emotional tone within a piece of text. A high positive polarity indicates strong approval, satisfaction, or optimism, while a negative polarity reflects criticism, frustration, or concern. Values close to zero tend to represent neutral or balanced language. Polarity is valuable because it allows analysts and applications to quantify subjective language in a measurable way. This makes it easier to sort user feedback, analyze trends, and classify responses automatically. Even though polarity is a simple metric, it forms the foundation for more advanced sentiment and emotion modeling.",
-    "content_markdown": "Sentiment polarity helps determine whether text leans positive, negative, or neutral. This score is widely used to classify customer feedback, analyze communication tone, and support automated decision making. A strong polarity value indicates clear emotional direction, while a near zero value suggests neutral or mixed expression. Polarity remains a core measurement in many NLP pipelines."
-  },
-  {
-    "title": "How Subjectivity Scores Improve NLP Interpretation",
-    "slug": "nlp-subjectivity-scores",
-    "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": [
-      "nlp",
-      "subjectivity",
-      "analysis"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Subjectivity scoring is an important part of natural language processing because it helps determine whether a statement reflects personal opinions or objective information. Highly subjective text usually contains sentiment, emotions, personal judgments, or assumptions. In contrast, objective text focuses on verifiable facts or neutral descriptions. Subjectivity scoring matters because it provides a clearer picture of how text should be interpreted in context. For example, customer feedback often blends factual statements with personal perception. Separating these elements helps applications categorize content more accurately and highlight information that reflects genuine opinion rather than neutral descriptions. Many NLP pipelines rely on subjectivity scoring to improve accuracy in classification tasks.",
-    "content_markdown": "Subjectivity measures how much a sentence reflects personal perspective versus objective information. A high subjectivity score usually indicates opinions, preferences, or emotional reactions. This metric helps NLP systems classify text more effectively and understand user intent in customer feedback or product reviews."
-  },
-  {
     "title": "How Keyword Extraction Summarizes Large Documents Quickly",
     "slug": "keyword-extraction-summarization",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/keyword-extraction/",
@@ -73,32 +50,6 @@
     "series": "Short NLP Notes",
     "body_markdown": "Sentiment analysis can help support teams respond more efficiently by identifying negative or urgent customer messages automatically. When incoming tickets are classified based on tone, organizations can route the most critical issues first. This helps improve response times and customer satisfaction. Combining sentiment analysis with keyword extraction enhances accuracy further by revealing the specific topics that require attention. For example, negative sentiment associated with billing terms may indicate a payment issue, while negative sentiment paired with technical keywords could signal a system outage. Automated prioritization allows teams to manage workloads more intelligently and prevent overlooked issues.",
     "content_markdown": "Sentiment scoring helps support platforms detect urgent or negative customer messages. This enables automated prioritization and faster resolution of high-impact issues."
-  },
-  {
-    "title": "Detecting Early Churn Signals Using Sentiment Patterns",
-    "slug": "detecting-churn-signals-nlp",
-    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/churn-signals/",
-    "tags": [
-      "nlp",
-      "churn",
-      "analytics"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Churn prediction becomes more accurate when sentiment analysis is included in customer behavior tracking. Users often express dissatisfaction in subtle ways long before they decide to stop using a product. Analyzing patterns in polarity, emotional tone, and subjectivity can reveal these early warning signs. For instance, a reduction in positive sentiment or an increase in frustration-related terms may indicate emerging dissatisfaction. When amplified across thousands of users, sentiment trends become powerful indicators for customer retention strategies. Automated alerts based on sentiment shifts can help support teams act before dissatisfaction grows.",
-    "content_markdown": "Sentiment patterns can reveal early signs of customer churn. By identifying shifts in tone or growing frustration, businesses can intervene before users decide to stop using a product."
-  },
-  {
-    "title": "Mapping Sentiment Trends Over Time with Automated NLP",
-    "slug": "mapping-sentiment-trends-nlp",
-    "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": [
-      "nlp",
-      "trends",
-      "sentiment"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Trend analysis becomes more insightful when sentiment data is tracked over time. Instead of interpreting individual comments or reviews, organizations can observe how emotional tone shifts across days, weeks, or product releases. This is especially useful for marketing teams, product managers, and customer support leaders. Sentiment trend mapping supports forecasting, campaign evaluation, and product decision making. When combined with entity recognition or topic extraction, trend analysis can pinpoint which features or processes cause the strongest changes in sentiment. This allows companies to adapt more quickly to user needs.",
-    "content_markdown": "Tracking sentiment over time helps identify long-term behavioral patterns. It enables more accurate forecasting and supports smarter business decisions."
   },
   {
     "title": "Social Listening Enhanced by Sentiment and Entity Recognition",
