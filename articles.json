@@ -1,18 +1,5 @@
 [
   {
-    "title": "How Named Entity Recognition Finds Meaning Inside Raw Text",
-    "slug": "named-entity-recognition-overview",
-    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/named-entity-recognition/",
-    "tags": [
-      "nlp",
-      "ner",
-      "entities"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Named Entity Recognition identifies important references in text such as people, organizations, products, or locations. This transforms raw sentences into structured data that can be used for analysis, automation, and search. NER is valuable in customer support, CRM systems, financial analysis, and content classification. When combined with sentiment or emotion metrics, entity recognition can reveal how customers feel about specific items or experiences. NER models typically rely on statistical patterns learned from large annotated datasets, enabling them to detect entities even in noisy or informal text. This makes NER practical in real-world applications where language is unpredictable.",
-    "content_markdown": "Named Entity Recognition extracts references such as organizations, products, or locations from unstructured text. It plays a key role in organizing information and improving downstream analysis."
-  },
-  {
     "title": "How Sentiment Helps Prioritize Support Tickets Automatically",
     "slug": "sentiment-prioritization-support-tickets",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
