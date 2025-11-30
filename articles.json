@@ -1,20 +1,13 @@
 [
   {
-    "title": "What Sentiment Polarity Really Means in Natural Language Processing",
-    "slug": "what-sentiment-polarity-means-nlp",
-    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/sentiment-polarity/",
-    "tags": ["nlp", "sentiment", "machinelearning"],
-    "series": "Short NLP Notes",
-    "devto_published": false,
-    "hashnode_published": false,
-    "body_markdown": "Sentiment polarity is one of the most commonly referenced outputs of a sentiment analysis model, yet it is often misunderstood. Polarity measures the direction and intensity of emotional tone within a piece of text. A high positive polarity indicates strong approval, satisfaction, or optimism, while a negative polarity reflects criticism, frustration, or concern. Values close to zero tend to represent neutral or balanced language. Polarity is valuable because it allows analysts and applications to quantify subjective language in a measurable way. This makes it easier to sort user feedback, analyze trends, and classify responses automatically. Even though polarity is a simple metric, it forms the foundation for more advanced sentiment and emotion modeling.",
-    "content_markdown": "Sentiment polarity helps determine whether text leans positive, negative, or neutral. This score is widely used to classify customer feedback, analyze communication tone, and support automated decision making. A strong polarity value indicates clear emotional direction, while a near zero value suggests neutral or mixed expression. Polarity remains a core measurement in many NLP pipelines."
-  },
-  {
     "title": "How Subjectivity Scores Improve NLP Interpretation",
     "slug": "nlp-subjectivity-scores",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": ["nlp", "subjectivity", "analysis"],
+    "tags": [
+      "nlp",
+      "subjectivity",
+      "analysis"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -25,7 +18,11 @@
     "title": "How Keyword Extraction Summarizes Large Documents Quickly",
     "slug": "keyword-extraction-summarization",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/keyword-extraction/",
-    "tags": ["nlp", "keywords", "summarization"],
+    "tags": [
+      "nlp",
+      "keywords",
+      "summarization"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -36,7 +33,11 @@
     "title": "Why Emotion Classification Matters in Customer Feedback",
     "slug": "emotion-classification-customer-feedback",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": ["nlp", "emotion", "analysis"],
+    "tags": [
+      "nlp",
+      "emotion",
+      "analysis"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -47,7 +48,11 @@
     "title": "How Named Entity Recognition Finds Meaning Inside Raw Text",
     "slug": "named-entity-recognition-overview",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/named-entity-recognition/",
-    "tags": ["nlp", "ner", "entities"],
+    "tags": [
+      "nlp",
+      "ner",
+      "entities"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -58,7 +63,11 @@
     "title": "How Sentiment Helps Prioritize Support Tickets Automatically",
     "slug": "sentiment-prioritization-support-tickets",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": ["nlp", "support", "sentiment"],
+    "tags": [
+      "nlp",
+      "support",
+      "sentiment"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -69,7 +78,11 @@
     "title": "Detecting Early Churn Signals Using Sentiment Patterns",
     "slug": "detecting-churn-signals-nlp",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/churn-signals/",
-    "tags": ["nlp", "churn", "analytics"],
+    "tags": [
+      "nlp",
+      "churn",
+      "analytics"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -80,7 +93,11 @@
     "title": "Mapping Sentiment Trends Over Time with Automated NLP",
     "slug": "mapping-sentiment-trends-nlp",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": ["nlp", "trends", "sentiment"],
+    "tags": [
+      "nlp",
+      "trends",
+      "sentiment"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -91,7 +108,11 @@
     "title": "Social Listening Enhanced by Sentiment and Entity Recognition",
     "slug": "social-listening-nlp",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/social-listening/",
-    "tags": ["nlp", "social", "analysis"],
+    "tags": [
+      "nlp",
+      "social",
+      "analysis"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
@@ -102,7 +123,11 @@
     "title": "Combining Subjectivity and Entities for More Accurate Feedback Categorization",
     "slug": "subjectivity-entities-feedback",
     "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": ["nlp", "feedback", "classification"],
+    "tags": [
+      "nlp",
+      "feedback",
+      "classification"
+    ],
     "series": "Short NLP Notes",
     "devto_published": false,
     "hashnode_published": false,
