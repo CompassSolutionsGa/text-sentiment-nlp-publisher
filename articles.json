@@ -10,7 +10,8 @@
     ],
     "series": "Short NLP Notes",
     "body_markdown": "Sentiment analysis can help support teams respond more efficiently by identifying negative or urgent customer messages automatically. When incoming tickets are classified based on tone, organizations can route the most critical issues first. This helps improve response times and customer satisfaction. Combining sentiment analysis with keyword extraction enhances accuracy further by revealing the specific topics that require attention. For example, negative sentiment associated with billing terms may indicate a payment issue, while negative sentiment paired with technical keywords could signal a system outage. Automated prioritization allows teams to manage workloads more intelligently and prevent overlooked issues.",
-    "content_markdown": "Sentiment scoring helps support platforms detect urgent or negative customer messages. This enables automated prioritization and faster resolution of high-impact issues."
+    "content_markdown": "Sentiment scoring helps support platforms detect urgent or negative customer messages. This enables automated prioritization and faster resolution of high-impact issues.",
+    "devto_published": true
   },
   {
     "title": "Social Listening Enhanced by Sentiment and Entity Recognition",
@@ -23,7 +24,9 @@
     ],
     "series": "Short NLP Notes",
     "body_markdown": "Social platforms produce large volumes of unstructured conversations. Natural language processing enhances social listening by isolating sentiment, identifying topic keywords, and recognizing named entities such as product names or brands. This helps businesses monitor reputation, track market perception, and discover trending issues. Entity-aware sentiment provides deeper insight because it reveals not only whether users feel positive or negative, but exactly what they are responding to. Social listening tools use these techniques to categorize conversations at scale and detect emerging opportunities or risks.",
-    "content_markdown": "NLP improves social listening by identifying sentiment, key topics, and named entities inside fast-moving conversations. This provides clearer insight into audience perception."
+    "content_markdown": "NLP improves social listening by identifying sentiment, key topics, and named entities inside fast-moving conversations. This provides clearer insight into audience perception.",
+    "devto_published": true,
+    "devto_url": "https://dev.to/compass_solutions_cb7c065/social-listening-enhanced-by-sentiment-and-entity-recognition-4dog"
   },
   {
     "title": "Combining Subjectivity and Entities for More Accurate Feedback Categorization",
@@ -36,6 +39,7 @@
     ],
     "series": "Short NLP Notes",
     "body_markdown": "Feedback is often complex, blending factual descriptions with personal opinions. By combining subjectivity scores and entity recognition, NLP systems can separate objective observations from emotional reactions. This enhances categorization accuracy and allows businesses to respond more effectively. For example, objective text referring to technical features may require different action than highly subjective comments expressing satisfaction or frustration. Entity-aware subjectivity analysis clarifies which parts of a product or service are drawing specific types of reactions. This combined approach produces structured insights that guide product, marketing, and support decisions.",
-    "content_markdown": "Subjectivity scores paired with entity extraction provide a clearer view of user feedback, separating factual observations from personal reactions for better decision making."
+    "content_markdown": "Subjectivity scores paired with entity extraction provide a clearer view of user feedback, separating factual observations from personal reactions for better decision making.",
+    "devto_published": true
   }
 ]
