@@ -1,4 +1,4 @@
-name: Auto-publish Dev.to and Hashnode articles
+name: Auto-publish Dev.to articles
 
 on:
   schedule:
@@ -33,22 +33,14 @@ jobs:
         run: |
           python devto_publisher.py
 
-      - name: Publish to Hashnode
-        env:
-          HASHNODE_API_KEY: ${{ secrets.HASHNODE_API_KEY }}
-          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
-          MAX_ARTICLES_PER_RUN: ${{ env.MAX_ARTICLES_PER_RUN }}
+      - name: Commit updated JSON files (if changed)
         run: |
-          python hashnode_publisher.py
-
-      - name: Commit updated articles.json (if changed)
-        run: |
-          if git status --porcelain | grep articles.json; then
+          if git status --porcelain | grep -E "articles.json|articles_published.json"; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add articles.json
-            git commit -m "Update articles.json after autopublish"
+            git add articles.json articles_published.json
+            git commit -m "Update article queue after Dev.to autopublish"
             git push
           else
-            echo "No changes to commit."
+            echo "No JSON changes to commit."
           fi
