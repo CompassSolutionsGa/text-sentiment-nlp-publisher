@@ -1,31 +1,5 @@
 [
   {
-    "title": "How Keyword Extraction Summarizes Large Documents Quickly",
-    "slug": "keyword-extraction-summarization",
-    "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/keyword-extraction/",
-    "tags": [
-      "nlp",
-      "keywords",
-      "summarization"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Keyword extraction identifies the most important terms within a document by analyzing frequency, linguistic patterns, and contextual relevance. Instead of scanning through long blocks of text, algorithms can isolate concepts that best represent the core message. This helps teams summarize reports, research papers, customer responses, or product reviews rapidly. By transforming unstructured text into structured data, keyword extraction improves search, indexing, and categorization. It also serves as a first step in deeper NLP processing such as topic modeling or sentiment clustering. Accurate keyword extraction allows downstream systems to focus on meaningful information without being overloaded by unnecessary detail.",
-    "content_markdown": "Keyword extraction finds the essential terms in text that best describe its meaning. This technique helps summarize large content, improves search relevance, and supports faster automation in NLP pipelines."
-  },
-  {
-    "title": "Why Emotion Classification Matters in Customer Feedback",
-    "slug": "emotion-classification-customer-feedback",
-    "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": [
-      "nlp",
-      "emotion",
-      "analysis"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Emotion classification extends beyond positive or negative polarity to identify specific emotional states such as joy, frustration, trust, or concern. This level of detail helps companies understand what customers truly feel, not just whether they liked or disliked an experience. Emotion detection improves prioritization of support tickets, identifies early churn signals, and reveals hidden drivers behind complaints or praise. Businesses can use emotion insights to refine product design, improve user experience, and identify communication gaps. Emotion classification is especially effective when combined with keyword extraction or entity recognition to pinpoint exactly what triggered the emotional response.",
-    "content_markdown": "Emotion classification identifies specific emotional categories within feedback, offering deeper insights than polarity alone. It helps businesses understand the underlying feelings behind customer messages and respond more effectively."
-  },
-  {
     "title": "How Named Entity Recognition Finds Meaning Inside Raw Text",
     "slug": "named-entity-recognition-overview",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/named-entity-recognition/",
