@@ -3,118 +3,131 @@ import os
 import sys
 import time
 from pathlib import Path
+
 import requests
 
-QUEUE_FILE = Path("articles.json")
-ARCHIVE_FILE = Path("articles_published.json")
+ARTICLES_FILE = Path("articles.json")
 DEVTO_API_URL = "https://dev.to/api/articles"
+
 DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
 MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
-WAIT_SECONDS = 5  # wait between posts
+
+# Standard CTA snippet that will be added to every post if not present
+CTA_SNIPPET = """
+
+---
+
+Try the Text Sentiment & NLP Insights API:
+
+- Landing page: https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/
+- RapidAPI listing: https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api
+""".strip("\n")
 
 
-def load_json(path, default=None):
-    if not path.exists():
-        return default if default is not None else []
-    with open(path, "r", encoding="utf-8") as f:
+def load_articles():
+    if not ARTICLES_FILE.exists():
+        print("articles.json not found")
+        sys.exit(1)
+    with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def save_json(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+def save_articles(articles):
+    with open(ARTICLES_FILE, "w", encoding="utf-8") as f:
+        json.dump(articles, f, indent=2, ensure_ascii=False)
 
 
-def safe_tags(tags):
-    """Dev.to only allows alphanumeric and hyphens; max 4 tags."""
-    cleaned = []
-    for t in tags:
-        t = t.lower().replace(" ", "-")
-        cleaned.append("".join(c for c in t if c.isalnum() or c == "-"))
-    return cleaned[:4]
+def get_next_unpublished_devto_index(articles):
+    for idx, article in enumerate(articles):
+        if not article.get("devto_published", False):
+            return idx
+    return None
+
+
+def build_body_with_cta(raw_body: str) -> str:
+    """
+    Ensure the body contains the CTA block with your two links.
+    We detect by checking for the landing or RapidAPI URL.
+    """
+    body = raw_body or ""
+
+    if (
+        "text-sentiment-nlp-insights-landing" in body
+        or "text-sentiment-nlp-insights-api" in body
+    ):
+        # Links already present; just return the body
+        return body
+
+    # Append CTA, separated by a blank line
+    return body.rstrip() + "\n\n" + CTA_SNIPPET
 
 
 def publish_to_devto(article):
     if not DEVTO_API_KEY:
-        print("ERROR: DEVTO_API_KEY is not set")
+        print("DEVTO_API_KEY environment variable is not set.")
         sys.exit(1)
+
+    body_markdown = build_body_with_cta(article.get("body_markdown", ""))
 
     payload = {
         "article": {
             "title": article["title"],
             "published": True,
-            "body_markdown": article["body_markdown"],
+            "body_markdown": body_markdown,
             "canonical_url": article.get("canonical_url"),
-            "tags": safe_tags(article.get("tags", [])),
+            "tags": article.get("tags", []),
             "series": article.get("series"),
         }
     }
 
-    headers = {"Content-Type": "application/json", "api-key": DEVTO_API_KEY}
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": DEVTO_API_KEY,
+    }
 
     response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
 
-    # Permanent validation error (already used canonical URL, bad tags, etc.)
-    if response.status_code == 422:
-        print("Permanent Dev.to error:", response.text)
-        return {"status": "invalid", "error": response.text}
-
-    # Rate limit – we should retry later
-    if response.status_code == 429:
-        print("Rate limited. Retry later.")
-        return {"status": "retry"}
-
+    # Dev.to may occasionally rate limit or reject; log details
     if response.status_code not in (200, 201):
-        print("Unknown Dev.to error:", response.text)
-        return {"status": "retry"}
+        print("Failed to publish to Dev.to:", response.status_code, response.text)
+        return None
 
     data = response.json()
-    print("Published →", data.get("url"))
-    return {"status": "success", "url": data.get("url")}
+    url = data.get("url")
+    print("Published to Dev.to:", url)
+    return url
 
 
 def main():
-    queue = load_json(QUEUE_FILE, default=[])
-    archive = load_json(ARCHIVE_FILE, default=[])
-
-    if not queue:
-        print("No articles in queue.")
-        return
-
-    new_queue = []
+    articles = load_articles()
     published_count = 0
 
-    for article in queue:
-        if published_count >= MAX_PER_RUN:
-            new_queue.append(article)
-            continue
+    while published_count < MAX_PER_RUN:
+        idx = get_next_unpublished_devto_index(articles)
+        if idx is None:
+            print("No unpublished Dev.to articles remaining.")
+            break
 
-        print(f"\nPublishing to Dev.to: {article['title']}")
-        result = publish_to_devto(article)
+        article = articles[idx]
+        print(f"Publishing to Dev.to: {article['title']}")
 
-        if result["status"] == "success":
-            article["devto_url"] = result["url"]
-            article["devto_published_at"] = time.time()
-            archive.append(article)
+        url = publish_to_devto(article)
+
+        if url:
+            # Mark as published and store URL
+            articles[idx]["devto_published"] = True
+            articles[idx]["devto_url"] = url
             published_count += 1
-            time.sleep(WAIT_SECONDS)
-            continue
+            save_articles(articles)
+        else:
+            # If publish fails, break out to avoid hammering Dev.to
+            print("Publish failed; stopping this run.")
+            break
 
-        if result["status"] == "invalid":
-            print("Marking article as permanently invalid and moving to archive.")
-            article["devto_error"] = result["error"]
-            archive.append(article)
-            continue
+        # Optional small delay between posts to be polite to the API
+        time.sleep(5)
 
-        if result["status"] == "retry":
-            print("Keeping article in queue for next run.")
-            new_queue.append(article)
-            continue
-
-    save_json(QUEUE_FILE, new_queue)
-    save_json(ARCHIVE_FILE, archive)
-
-    print(f"\nDone. Published {published_count} article(s).")
+    print(f"Dev.to publish run complete. Published {published_count} article(s).")
 
 
 if __name__ == "__main__":
