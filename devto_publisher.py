@@ -12,15 +12,16 @@ DEVTO_API_URL = "https://dev.to/api/articles"
 DEVTO_API_KEY = os.getenv("DEVTO_API_KEY")
 MAX_PER_RUN = int(os.getenv("MAX_ARTICLES_PER_RUN", "3"))
 
-# Standard CTA snippet that will be added to every post if not present
+# Standard CTA snippet with SEO-friendly hyperlinks
 CTA_SNIPPET = """
-
 ---
 
-Try the Text Sentiment & NLP Insights API:
+## Try the Text Sentiment & NLP Insights API
 
-- Landing page: https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/
-- RapidAPI listing: https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api
+If you want to work with production-ready sentiment and text intelligence, you can integrate this API directly into your stack:
+
+- Visit the official landing page: [Text Sentiment & NLP Insights API landing page](https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/)
+- Explore the hosted version on RapidAPI: [Text Sentiment & NLP Insights API on RapidAPI](https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api)
 """.strip("\n")
 
 
@@ -47,9 +48,9 @@ def get_next_unpublished_devto_index(articles):
 def build_body_with_cta(raw_body: str) -> str:
     """
     Ensure the body contains the CTA block with your two links.
-    We detect by checking for the landing or RapidAPI URL.
+    We detect by checking for either the landing or RapidAPI URL.
     """
-    body = raw_body or ""
+    body = (raw_body or "").rstrip()
 
     if (
         "text-sentiment-nlp-insights-landing" in body
@@ -59,54 +60,53 @@ def build_body_with_cta(raw_body: str) -> str:
         return body
 
     # Append CTA, separated by a blank line
-    return body.rstrip() + "\n\n" + CTA_SNIPPET
+    if body:
+        return body + "\n\n" + CTA_SNIPPET
+    else:
+        return CTA_SNIPPET
 
 
 def publish_to_devto(article):
-    url = "https://dev.to/api/articles"
+    if not DEVTO_API_KEY:
+        print("DEVTO_API_KEY environment variable is not set.")
+        sys.exit(1)
+
     headers = {
         "api-key": DEVTO_API_KEY,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
-    CTA = """
----
-
-## 🚀 Try the Text Sentiment & NLP Insights API  
-Extract sentiment, keywords, emotion tone, subjectivity, and more using a simple API.  
-
-🔗 **Landing Page:**  
-https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/
-
-🔗 **RapidAPI Listing:**  
-https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api
-"""
+    # Build bodies with CTA + hyperlinks injected
+    body_with_cta = build_body_with_cta(article.get("body_markdown", ""))
+    content_source = article.get("content_markdown") or article.get("body_markdown", "")
+    content_with_cta = build_body_with_cta(content_source)
 
     payload = {
         "article": {
             "title": article["title"],
             "published": True,
             "canonical_url": article["canonical_url"],
-            "series": article.get("series", None),
-            "tags": article["tags"],
-            "body_markdown": article["body_markdown"] + "\n\n" + CTA,
-            "content_markdown": article["content_markdown"] + "\n\n" + CTA
+            "series": article.get("series"),
+            "tags": article.get("tags", []),
+            "body_markdown": body_with_cta,
+            "content_markdown": content_with_cta,
         }
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(DEVTO_API_URL, headers=headers, json=payload)
 
     if response.status_code == 201:
-        print("Published →", response.json()["url"])
-        return True
+        data = response.json()
+        url = data.get("url")
+        print("Published →", url)
+        return url
 
     if response.status_code == 429:
         print("Rate limited. Retry later.")
-        return False
+        return None
 
-    print("Failed to publish:", response.text)
-    return False
-
+    print("Failed to publish to Dev.to:", response.status_code, response.text)
+    return None
 
 
 def main():
@@ -125,18 +125,17 @@ def main():
         url = publish_to_devto(article)
 
         if url:
-            # Mark as published and store URL
             articles[idx]["devto_published"] = True
             articles[idx]["devto_url"] = url
             published_count += 1
             save_articles(articles)
         else:
-            # If publish fails, break out to avoid hammering Dev.to
+            # If publish fails (validation or rate limit), stop this run
             print("Publish failed; stopping this run.")
             break
 
-        # Optional small delay between posts to be polite to the API
-        time.sleep(5)
+        # Be polite to Dev.to and avoid rate limiting
+        time.sleep(60)
 
     print(f"Dev.to publish run complete. Published {published_count} article(s).")
 
