@@ -63,39 +63,50 @@ def build_body_with_cta(raw_body: str) -> str:
 
 
 def publish_to_devto(article):
-    if not DEVTO_API_KEY:
-        print("DEVTO_API_KEY environment variable is not set.")
-        sys.exit(1)
+    url = "https://dev.to/api/articles"
+    headers = {
+        "api-key": DEVTO_API_KEY,
+        "Content-Type": "application/json"
+    }
 
-    body_markdown = build_body_with_cta(article.get("body_markdown", ""))
+    CTA = """
+---
+
+## 🚀 Try the Text Sentiment & NLP Insights API  
+Extract sentiment, keywords, emotion tone, subjectivity, and more using a simple API.  
+
+🔗 **Landing Page:**  
+https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/
+
+🔗 **RapidAPI Listing:**  
+https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api
+"""
 
     payload = {
         "article": {
             "title": article["title"],
             "published": True,
-            "body_markdown": body_markdown,
-            "canonical_url": article.get("canonical_url"),
-            "tags": article.get("tags", []),
-            "series": article.get("series"),
+            "canonical_url": article["canonical_url"],
+            "series": article.get("series", None),
+            "tags": article["tags"],
+            "body_markdown": article["body_markdown"] + "\n\n" + CTA,
+            "content_markdown": article["content_markdown"] + "\n\n" + CTA
         }
     }
 
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": DEVTO_API_KEY,
-    }
+    response = requests.post(url, headers=headers, json=payload)
 
-    response = requests.post(DEVTO_API_URL, json=payload, headers=headers)
+    if response.status_code == 201:
+        print("Published →", response.json()["url"])
+        return True
 
-    # Dev.to may occasionally rate limit or reject; log details
-    if response.status_code not in (200, 201):
-        print("Failed to publish to Dev.to:", response.status_code, response.text)
-        return None
+    if response.status_code == 429:
+        print("Rate limited. Retry later.")
+        return False
 
-    data = response.json()
-    url = data.get("url")
-    print("Published to Dev.to:", url)
-    return url
+    print("Failed to publish:", response.text)
+    return False
+
 
 
 def main():
