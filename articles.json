@@ -1,19 +1,5 @@
 [
   {
-    "title": "How Sentiment Helps Prioritize Support Tickets Automatically",
-    "slug": "sentiment-prioritization-support-tickets",
-    "canonical_url": "https://rapidapi.com/CompassSolutionsGa/api/text-sentiment-nlp-insights-api",
-    "tags": [
-      "nlp",
-      "support",
-      "sentiment"
-    ],
-    "series": "Short NLP Notes",
-    "body_markdown": "Sentiment analysis can help support teams respond more efficiently by identifying negative or urgent customer messages automatically. When incoming tickets are classified based on tone, organizations can route the most critical issues first. This helps improve response times and customer satisfaction. Combining sentiment analysis with keyword extraction enhances accuracy further by revealing the specific topics that require attention. For example, negative sentiment associated with billing terms may indicate a payment issue, while negative sentiment paired with technical keywords could signal a system outage. Automated prioritization allows teams to manage workloads more intelligently and prevent overlooked issues.",
-    "content_markdown": "Sentiment scoring helps support platforms detect urgent or negative customer messages. This enables automated prioritization and faster resolution of high-impact issues.",
-    "devto_published": true
-  },
-  {
     "title": "Social Listening Enhanced by Sentiment and Entity Recognition",
     "slug": "social-listening-nlp",
     "canonical_url": "https://compasssolutionsga.github.io/text-sentiment-nlp-insights-landing/articles/social-listening/",
